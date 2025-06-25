@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking System</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div id="header-logo-container">
+            <img id="header-logo" src="tavrida_new.png" alt="Логотип системы бронирования">
+        </div>
+        
+        <div id="auth-section">
+            <p>Авторизация...</p>
+        </div>
+        
+        <div id="user-actions" style="display: none;">
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="bookings-tab">Мои бронирования</button>
+                <button class="tab-btn" data-tab="create-tab">Создать бронирование</button>
+                <button class="tab-btn admin-only" data-tab="admin-tab" style="display: none;">Администрирование</button>
+                <button class="tab-btn" data-tab="calendar-tab">Календарь</button>
+            </div>
+
+            <div id="calendar-tab" class="tab-content">
+                <h2>Календарь бронирований</h2>
+                <div class="controls">
+                    <button id="export-calendar" class="admin-only" style="display: none;">Выгрузить в Excel</button>
+                </div>
+                    <div id="calendar-loading" class="loading">Загрузка календаря...</div>
+                    <div id="calendar">
+                </div>
+            </div>
+
+            <div id="bookings-tab" class="tab-content active">
+                <h2>Мои бронирования</h2>
+                <div class="controls">
+                    <div class="sort-controls-group">
+                        <select id="bookings-sort-by" aria-label="Поле сортировки">
+                            <option value="id" selected>Номер заявки</option>
+                            <option value="start_date">Дата начала</option>
+                            <option value="end_date">Дата окончания</option>
+                        </select>
+                        <select id="bookings-sort-order" aria-label="Порядок сортировки">
+                            <option value="desc" selected>По убыванию</option>
+                            <option value="asc">По возрастанию</option>
+                        </select>
+                    </div>
+                    <button id="refresh-bookings">Обновить список</button>
+                </div>
+                <div id="loading" class="loading">Загрузка данных...</div>
+                <div id="error-message" class="error-message"></div>
+                <div class="table-wrapper">
+                    <table id="bookings-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Дата начала</th>
+                                <th>Дата окончания</th>
+                                <th>Кол-во</th>
+                                <th>Тема</th>
+                                <th>Статус</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bookings-body"></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div id="create-tab" class="tab-content">
+                <h2>Создать новое бронирование</h2>
+                <p class="form-note">Поля, отмеченные <span class="required-star">*</span>, обязательны для заполнения.</p>
+                <form id="create-booking-form">
+                    <div class="form-group">
+                        <label for="start-date">Дата начала <span class="required-star">*</span></label>
+                        <input type="date" id="start-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="end-date">Дата окончания <span class="required-star">*</span></label>
+                        <input type="date" id="end-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="people-count">Количество участников с проживанием <span class="required-star">*</span></label>
+                        <input type="number" id="people-count" min="1" placeholder="Например: 25" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="people-count-overall">Количество участников и зрителей всего <span class="required-star">*</span></label>
+                        <input type="number" id="people-count-overall" min="1" placeholder="Например: 10" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="theme">Тема мероприятия <span class="required-star">*</span></label>
+                        <input type="text" id="theme" placeholder="Например: Конференция по AI" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="name">Название мероприятия <span class="required-star">*</span></label>
+                        <input type="text" id="name" placeholder="Например: Ежегодный саммит разработчиков" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="program-type">Тип программы <span class="required-star">*</span></label>
+                        <select id="program-type" required>
+                            <option value="">Выберите тип...</option>
+                            <option value="флагманская">Флагманская</option>
+                            <option value="индустриальная">Индустриальная</option>
+                            <option value="партнерская (коммерческая)">Партнерская (коммерческая)</option>
+                            <option value="корпоративная">Корпоративная</option>
+                            <option value="событие">Событие</option>
+                            <option value="монтаж/демонтаж">Монтаж/демонтаж</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Описание <span class="required-star" id="description-star">*</span></label>
+                        <textarea id="description" placeholder="Краткое описание. Если программа партнерская, обязательно укажите с кем совместно проводится." required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="target-audience">Целевая аудитория <span class="required-star">*</span></label>
+                        <input type="text" id="target-audience" placeholder="Например: Студенты, разработчики, менеджеры" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="registration-type">Тип регистрации <span class="required-star">*</span></label>
+                        <select id="registration-type" required>
+                            <option value="">Выберите тип...</option>
+                            <option value="открытая">Открытая</option>
+                            <option value="закрытая">Закрытая</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="participants-accomodation-type">Тип размещения участников <span class="required-star">*</span></label>
+                        <input type="text" id="participants-accomodation-type" placeholder="Например: одноместное, 2-х местное, 3-х местное" required>
+                </div>
+                    
+                    <div class="form-group">
+                        <label for="logistics-type">Логистика участников <span class="required-star">*</span></label>
+                        <select id="logistics-type" required>
+                            <option value="">Выберите тип...</option>
+                            <option value="самостоятельная">Самостоятельная</option>
+                            <option value="логистика по региону">Логистика по региону</option>
+                            <option value="групповой трансфер">Групповой трансфер</option>
+                            <option value="самостоятельная/по Новороссии">Самостоятельная/по Новороссии</option>
+                            <option value="По Донбассу/Федеральная">По Донбассу/Федеральная</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="place">Формат проведения <span class="required-star">*</span></label>
+                        <select id="place" required>
+                            <option value="">Выберите тип...</option>
+                            <option value="Офлайн Счастливцево">Офлайн Счастливцево</option>
+                            <option value="Офлайн Счастливцево и иная площадка">Офлайн Счастливцево и иная площадка</option>
+                            <option value="Гибрид Счастливцево">Гибрид Счастливцево</option>
+                            <option value="Гибрид Счастливцево и иная площадка">Гибрид Счастливцево и иная площадка</option>
+                        </select>
+                </div>
+                    
+                    <div class="form-group">
+                        <label for="experts-count">Количество экспертов <span class="required-star">*</span></label>
+                        <input type="number" id="experts-count" min="0" placeholder="0, если нет" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="curator-fio">ФИО куратора <span class="required-star">*</span></label>
+                        <input type="text" id="curator-fio" placeholder="Иванов Иван Иванович" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="curator-position">Должность куратора <span class="required-star">*</span></label>
+                        <input type="text" id="curator-position" placeholder="Менеджер проектов" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="curator-contact">Контакты куратора <span class="required-star">*</span></label>
+                        <input type="text" id="curator-contact" placeholder="Телефон или email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="other-info">Прочая информация</label>
+                        <textarea id="other-info" placeholder="Дополнительные детали, не вошедшие в другие поля"></textarea>
+                    </div>
+                    <button type="submit">Создать бронирование</button>
+                    <div id="create-error" class="error-message"></div>
+                </form>
+            </div>
+            
+            <div id="admin-tab" class="tab-content">
+                <h2>Администрирование бронирований</h2>
+                <div class="controls">
+                     <div class="sort-controls-group">
+                        <select id="admin-sort-by" aria-label="Поле сортировки">
+                            <option value="id" selected>Номер заявки</option>
+                            <option value="start_date">Дата начала</option>
+                            <option value="end_date">Дата окончания</option>
+                        </select>
+                        <select id="admin-sort-order" aria-label="Порядок сортировки">
+                            <option value="desc" selected>По убыванию</option>
+                            <option value="asc">По возрастанию</option>
+                        </select>
+                    </div>
+                    <button id="refresh-admin-bookings">Обновить список</button>
+                </div>
+                <div id="admin-loading" class="loading">Загрузка данных...</div>
+                <div id="admin-error" class="error-message"></div>
+                <div class="table-wrapper">
+                    <table id="admin-bookings-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Пользователь</th>
+                                <th>Дата начала</th>
+                                <th>Дата окончания</th>
+                                <th>Кол-во</th>
+                                <th>Тема</th>
+                                <th>Статус</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-bookings-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="calendar-day-popover" class="calendar-day-popover">
+            <button id="calendar-popover-close" class="calendar-popover-close">×</button>
+            <div id="calendar-popover-content">
+            </div>
+        </div>
+
+    </div>
+
+    <div id="edit-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('edit-modal')">×</span>
+            <h2>Редактировать бронирование</h2>
+            <p class="form-note">Поля, отмеченные <span class="required-star">*</span>, обязательны для заполнения.</p>
+            <form id="edit-booking-form">
+                <input type="hidden" id="edit-booking-id">
+                 <div class="form-group">
+                    <label for="edit-start-date">Дата начала <span class="required-star">*</span></label>
+                    <input type="date" id="edit-start-date" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-end-date">Дата окончания <span class="required-star">*</span></label>
+                    <input type="date" id="edit-end-date" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-people-count">Количество участников с проживанием <span class="required-star">*</span></label>
+                    <input type="number" id="edit-people-count" min="1" placeholder="Например: 25" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-people-count">Количество участников и зрителей всего <span class="required-star">*</span></label>
+                    <input type="number" id="edit-people-count-overall" min="1" placeholder="Например: 25" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-theme">Тема мероприятия <span class="required-star">*</span></label>
+                    <input type="text" id="edit-theme" placeholder="Например: Конференция по AI" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-name">Название мероприятия <span class="required-star">*</span></label>
+                    <input type="text" id="edit-name" placeholder="Например: Ежегодный саммит разработчиков" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-program-type">Тип программы <span class="required-star">*</span></label>
+                    <select id="edit-program-type" required>
+                        <option value="">Выберите тип...</option>
+                        <option value="флагманская">Флагманская</option>
+                        <option value="индустриальная">Индустриальная</option>
+                        <option value="партнерская (коммерческая)">Партнерская (коммерческая)</option>
+                        <option value="корпоративная">Корпоративная</option>
+                        <option value="событие">Событие</option>
+                        <option value="монтаж/демонтаж">Монтаж/демонтаж</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-description">Описание <span class="required-star" id="edit-description-star">*</span></label>
+                    <textarea id="edit-description" placeholder="Краткое описание. Если программа партнерская, обязательно укажите с кем совместно проводится." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="edit-target-audience">Целевая аудитория <span class="required-star">*</span></label>
+                    <input type="text" id="edit-target-audience" placeholder="Например: Студенты, разработчики, менеджеры" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-registration-type">Тип регистрации <span class="required-star">*</span></label>
+                    <select id="edit-registration-type" required>
+                        <option value="">Выберите тип...</option>
+                        <option value="открытая">Открытая</option>
+                        <option value="закрытая">Закрытая</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="edit-participants-accomodation-type">Тип размещения участников <span class="required-star">*</span></label>
+                    <input type="text" id="edit-participants-accomodation-type" placeholder="Например: одноместное, 2-х местное, 3-х местное" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-logistics-type">Логистика участников <span class="required-star">*</span></label>
+                    <select id="edit-logistics-type" required>
+                        <option value="">Выберите тип...</option>
+                        <option value="самостоятельная">Самостоятельная</option>
+                        <option value="логистика по региону">Логистика по региону</option>
+                        <option value="групповой трансфер">Групповой трансфер</option>
+                        <option value="самостоятельная/по Новороссии">Самостоятельная/по Новороссии</option>
+                        <option value="По Донбассу/Федеральная">По Донбассу/Федеральная</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-place">Формат проведения <span class="required-star">*</span></label>
+                    <select id="edit-place" required>
+                        <option value="">Выберите тип...</option>
+                        <option value="Офлайн Счастливцево">Офлайн Счастливцево</option>
+                        <option value="Офлайн Счастливцево и иная площадка">Офлайн Счастливцево и иная площадка</option>
+                        <option value="Гибрид Счастливцево">Гибрид Счастливцево</option>
+                        <option value="Гибрид Счастливцево и иная площадка">Гибрид Счастливцево и иная площадка</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="edit-experts-count">Количество экспертов <span class="required-star">*</span></label>
+                    <input type="number" id="edit-experts-count" min="0" placeholder="0, если нет" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-curator-fio">ФИО куратора <span class="required-star">*</span></label>
+                    <input type="text" id="edit-curator-fio" placeholder="Иванов Иван Иванович" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-curator-position">Должность куратора <span class="required-star">*</span></label>
+                    <input type="text" id="edit-curator-position" placeholder="Менеджер проектов" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-curator-contact">Контакты куратора <span class="required-star">*</span></label>
+                    <input type="text" id="edit-curator-contact" placeholder="Телефон или email" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-other-info">Прочая информация</label>
+                    <textarea id="edit-other-info" placeholder="Дополнительные детали, не вошедшие в другие поля"></textarea>
+                </div>
+
+                <div class="form-group admin-only-field" style="display: none;">
+                    <label for="edit-status">Статус бронирования (Админ)</label>
+                    <select id="edit-status">
+                        <option value="pending">Ожидает</option>
+                        <option value="approved">Подтверждено</option>
+                        <option value="rejected">Отклонено</option>
+                    </select>
+                </div>
+
+                <button type="submit">Сохранить изменения</button>
+                <div id="edit-error" class="error-message"></div>
+            </form>
+        </div>
+    </div>
+
+    <div id="booking-details-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('booking-details-modal')">×</span>
+            <h2>Детали бронирования</h2>
+            <div id="booking-details-content"></div>
+            <h3>Комментарии</h3>
+            <div id="booking-comments-list"></div>
+            <form id="add-comment-form" style="margin-top: 15px;">
+                <input type="hidden" id="comment-booking-id">
+                <div class="form-group">
+                    <label for="new-comment-text">Новый комментарий:</label>
+                    <textarea id="new-comment-text" rows="3" required></textarea>
+                </div>
+                <button type="submit">Добавить комментарий</button>
+                <div id="comment-error" class="error-message"></div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
