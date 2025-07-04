@@ -683,7 +683,7 @@ function getBookingDataFromForm(formPrefix = '') {
     const dataToSend = {
         start_date: getVal('start-date', true),
         end_date: getVal('end-date', true),
-        people_count: getNumVal('people-count', true, 1),
+        people_count: getNumVal('people-count', true, 0),
         people_count_overall: getNumVal('people-count-overall', true, 1),
         theme: getVal('theme', true),
         name: getVal('name', true),

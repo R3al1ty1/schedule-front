@@ -84,7 +84,7 @@
                     </div>
                     <div class="form-group">
                         <label for="people-count">Количество участников с проживанием <span class="required-star">*</span></label>
-                        <input type="number" id="people-count" min="1" placeholder="Например: 25" required>
+                        <input type="number" id="people-count" min="0" placeholder="Например: 25" required>
                     </div>
                     <div class="form-group">
                         <label for="people-count-overall">Количество участников и зрителей всего <span class="required-star">*</span></label>
@@ -106,6 +106,7 @@
                             <option value="флагманская">Флагманская</option>
                             <option value="индустриальная">Индустриальная</option>
                             <option value="партнерская (коммерческая)">Партнерская (коммерческая)</option>
+                            <option value="партнерская (некоммерческая)">Партнерская (некоммерческая)</option>
                             <option value="корпоративная">Корпоративная</option>
                             <option value="событие">Событие</option>
                             <option value="монтаж/демонтаж">Монтаж/демонтаж</option>
@@ -140,10 +141,9 @@
                         <select id="logistics-type" required>
                             <option value="">Выберите тип...</option>
                             <option value="самостоятельная">Самостоятельная</option>
-                            <option value="логистика по региону">Логистика по региону</option>
-                            <option value="групповой трансфер">Групповой трансфер</option>
-                            <option value="самостоятельная/по Новороссии">Самостоятельная/по Новороссии</option>
-                            <option value="По Донбассу/Федеральная">По Донбассу/Федеральная</option>
+                            <option value="внутри региона/исторических территорий">Внутри региона/исторических территорий</option>
+                            <option value="групповой трансфер Крым">Групповой трансфер Крым</option>
+                            <option value="групповой трансфер другие регионы">Групповой трансфер другие регионы</option>
                         </select>
                     </div>
 
@@ -246,7 +246,7 @@
                 </div>
                 <div class="form-group">
                     <label for="edit-people-count">Количество участников с проживанием <span class="required-star">*</span></label>
-                    <input type="number" id="edit-people-count" min="1" placeholder="Например: 25" required>
+                    <input type="number" id="edit-people-count" min="0" placeholder="Например: 25" required>
                 </div>
                 <div class="form-group">
                     <label for="edit-people-count">Количество участников и зрителей всего <span class="required-star">*</span></label>
@@ -268,6 +268,7 @@
                         <option value="флагманская">Флагманская</option>
                         <option value="индустриальная">Индустриальная</option>
                         <option value="партнерская (коммерческая)">Партнерская (коммерческая)</option>
+                        <option value="партнерская (некоммерческая)">Партнерская (некоммерческая)</option>
                         <option value="корпоративная">Корпоративная</option>
                         <option value="событие">Событие</option>
                         <option value="монтаж/демонтаж">Монтаж/демонтаж</option>
@@ -302,10 +303,9 @@
                     <select id="edit-logistics-type" required>
                         <option value="">Выберите тип...</option>
                         <option value="самостоятельная">Самостоятельная</option>
-                        <option value="логистика по региону">Логистика по региону</option>
-                        <option value="групповой трансфер">Групповой трансфер</option>
-                        <option value="самостоятельная/по Новороссии">Самостоятельная/по Новороссии</option>
-                        <option value="По Донбассу/Федеральная">По Донбассу/Федеральная</option>
+                        <option value="внутри региона/исторических территорий">Внутри региона/исторических территорий</option>
+                        <option value="групповой трансфер Крым">Групповой трансфер Крым</option>
+                        <option value="групповой трансфер другие регионы">Групповой трансфер другие регионы</option>
                     </select>
                 </div>
 
