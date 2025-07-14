@@ -197,9 +197,8 @@ function renderCalendar() {
     }
 
     for (let day = 1; day <= daysInMonth; day++) {
-        const month = String(currentMonth + 1).padStart(2, '0');
-        const dayOfMonth = String(day).padStart(2, '0');
-        const dateString = `${currentYear}-${month}-${dayOfMonth}`;
+        const currentDate = new Date(currentYear, currentMonth, day);
+        const dateString = currentDate.toISOString().split('T')[0];
 
         const calendarDayData = calendarApiData && calendarApiData.find(d => d.date === dateString);
         let dayClass = "calendar-day";
@@ -216,8 +215,8 @@ function renderCalendar() {
                 dayClass += " booked-partial";
                 dotColor = '#ef6c00';
             }
-            const namesTitle = calendarDayData.names && calendarDayData.names.length > 0 ? calendarDayData.names.join(', ') : 'Нет названий';
-            dayContentWrapper = `<div title="Названия: ${namesTitle}\nЛюдей: ${calendarDayData.total_people}">${day}<div class="booked-dot" style="background-color: ${dotColor};"></div></div>`;
+            const themesTitle = calendarDayData.themes.join(', ');
+            dayContentWrapper = `<div title="Темы: ${themesTitle}\nЛюдей: ${calendarDayData.total_people}">${day}<div class="booked-dot" style="background-color: ${dotColor};"></div></div>`;
         } else {
             dayContentWrapper = `<div>${day}</div>`;
         }
@@ -243,72 +242,103 @@ function renderCalendar() {
 function handleCalendarDayClick(event) {
     console.log('handleCalendarDayClick triggered');
     const dayElement = event.target.closest('.calendar-day');
+    console.log('Day element:', dayElement);
 
     if (!dayElement || dayElement.classList.contains('empty')) {
-        if (calendarPopover && calendarPopover.classList.contains('visible') && !event.target.closest('#calendar-day-popover')) {
-            calendarPopover.classList.remove('visible');
-            setTimeout(() => {
+        console.log('Empty or no day element found or click outside.');
+        if (calendarPopover && calendarPopover.classList.contains('visible') && !calendarPopover.contains(event.target) && !dayElement) {
+             calendarPopover.classList.remove('visible');
+             setTimeout(() => {
                 if (!calendarPopover.classList.contains('visible')) {
                     calendarPopover.style.display = 'none';
                 }
-            }, 200);
+             }, 200);
         }
         return;
     }
 
     const isBooked = dayElement.dataset.isBooked === 'true';
     const dateString = dayElement.dataset.date;
+    console.log(`isBooked: ${isBooked}, dateString: ${dateString}`);
 
     if (isBooked && dateString) {
-        const dayData = calendarApiData.find(d => d.date === dateString);
+        console.log('Condition isBooked && dateString is true');
+        const dayData = calendarApiData && calendarApiData.find(d => d.date === dateString);
+        console.log('Found dayData:', dayData);
+        console.log('Popover elements before showing:', calendarPopover, calendarPopoverContent);
 
         if (dayData && calendarPopover && calendarPopoverContent) {
+            console.log('Condition dayData && calendarPopover && calendarPopoverContent is true. Showing popover.');
             calendarPopoverContent.innerHTML = `
                 <p><strong>Дата:</strong> ${formatDateForDisplay(dateString)}</p>
                 <p><strong>Всего человек:</strong> ${dayData.total_people}</p>
-                <p><strong>Названия программ:</strong></p>
-                <div class="programs-list">
-                    ${dayData.names && dayData.names.length > 0 ? dayData.names.map(name => `<div>• ${name}</div>`).join('') : 'Нет программ'}
+                <p><strong>Темы:</strong></p>
+                <div class="themes-list">
+                    ${dayData.themes.length > 0 ? dayData.themes.map(theme => `<span>• ${theme}</span>`).join('') : 'Нет тем'}
                 </div>
             `;
 
-            calendarPopover.style.visibility = 'hidden';
-            calendarPopover.style.display = 'block';
-            const popoverHeight = calendarPopover.offsetHeight;
-            const popoverWidth = calendarPopover.offsetWidth;
-
             const dayRect = dayElement.getBoundingClientRect();
+            const calendarContainer = document.getElementById('calendar');
+            const calendarContainerRect = calendarContainer.getBoundingClientRect();
 
-            const POPOVER_OFFSET = 8;
+            const POPOVER_OFFSET = 1; // Уменьшенный отступ
 
-            let top = (dayRect.top + window.scrollY) - popoverHeight - POPOVER_OFFSET;
-            let left = dayRect.left + window.scrollX;
+            let popoverTop = dayRect.bottom - calendarContainerRect.top + window.scrollY + POPOVER_OFFSET;
+            let popoverLeft = dayRect.left - calendarContainerRect.left + window.scrollX;
 
-            if (top < window.scrollY) {
-                top = (dayRect.bottom + window.scrollY) + POPOVER_OFFSET;
+            calendarPopover.style.top = `${popoverTop}px`;
+            calendarPopover.style.left = `${popoverLeft}px`;
+
+            calendarPopover.style.display = 'block';
+            requestAnimationFrame(() => {
+                calendarPopover.classList.add('visible');
+            });
+
+
+            console.log('Popover style.display set to block. Position:', calendarPopover.style.top, calendarPopover.style.left);
+
+            const popoverRect = calendarPopover.getBoundingClientRect();
+            const mainContainer = document.querySelector('.container') || document.body;
+            const mainContainerRect = mainContainer.getBoundingClientRect();
+
+            if (popoverRect.right > mainContainerRect.right - 10) {
+                popoverLeft = dayRect.right - calendarContainerRect.left + window.scrollX - popoverRect.width;
+                calendarPopover.style.left = `${Math.max(0, popoverLeft)}px`;
+            }
+            if (popoverRect.left < mainContainerRect.left + 10) {
+                popoverLeft = dayRect.left - calendarContainerRect.left + window.scrollX;
+                 calendarPopover.style.left = `${Math.max(0, popoverLeft)}px`;
             }
 
-            if (left + popoverWidth > document.documentElement.clientWidth) {
-                left = (dayRect.right + window.scrollX) - popoverWidth;
+            if (popoverRect.bottom > (window.innerHeight - 10) || popoverRect.bottom > (mainContainerRect.bottom - 10) ) {
+                popoverTop = dayRect.top - calendarContainerRect.top + window.scrollY - popoverRect.height - POPOVER_OFFSET;
+                calendarPopover.style.top = `${Math.max(0, popoverTop)}px`;
             }
 
-            if (left < 0) left = 5;
-
-            calendarPopover.style.top = `${top}px`;
-            calendarPopover.style.left = `${left}px`;
-            calendarPopover.style.visibility = 'visible';
-            calendarPopover.classList.add('visible');
+            console.log('Popover final position:', calendarPopover.style.top, calendarPopover.style.left);
 
         } else {
             if (calendarPopover) {
                 calendarPopover.classList.remove('visible');
-                setTimeout(() => !calendarPopover.classList.contains('visible') && (calendarPopover.style.display = 'none'), 200);
+                setTimeout(() => {
+                    if (!calendarPopover.classList.contains('visible')) {
+                        calendarPopover.style.display = 'none';
+                    }
+                }, 200);
             }
+            console.warn(`Data for date ${dateString} not found or popover not initialized. dayData:`, dayData, 'calendarPopover:', calendarPopover, 'calendarPopoverContent:', calendarPopoverContent);
+            logToUI(`Календарь: данные для ${dateString} не найдены или popover не инициализирован.`);
         }
     } else {
+        console.log('Condition isBooked && dateString is false. Hiding popover if open.');
         if (calendarPopover) {
             calendarPopover.classList.remove('visible');
-            setTimeout(() => !calendarPopover.classList.contains('visible') && (calendarPopover.style.display = 'none'), 200);
+            setTimeout(() => {
+                if (!calendarPopover.classList.contains('visible')) {
+                    calendarPopover.style.display = 'none';
+                }
+            }, 200);
         }
     }
 }
@@ -653,7 +683,7 @@ function getBookingDataFromForm(formPrefix = '') {
     const dataToSend = {
         start_date: getVal('start-date', true),
         end_date: getVal('end-date', true),
-        people_count: getNumVal('people-count', true, 0),
+        people_count: getNumVal('people-count', true, 1),
         people_count_overall: getNumVal('people-count-overall', true, 1),
         theme: getVal('theme', true),
         name: getVal('name', true),
@@ -1034,8 +1064,7 @@ function logToUI(message) {
 
 function formatDateForDisplay(dateStr) {
     if (!dateStr) return 'N/A';
-    // Добавляем 'T00:00:00' чтобы new Date правильно парсил строку как локальную дату, а не UTC
-    return new Date(dateStr + 'T00:00:00').toLocaleDateString('ru-RU');
+    return new Date(dateStr).toLocaleDateString('ru-RU');
 }
 
 function translateStatus(status) {
